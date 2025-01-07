@@ -34,11 +34,11 @@ var (
 	columnStyle = lipgloss.
 			NewStyle().Padding(1, 2).
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("#3c3c3c"))
+			BorderForeground(lipgloss.Color("#00C0A3"))
 	focusedStyle = lipgloss.
 			NewStyle().Padding(1, 2).
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("62"))
+			BorderForeground(lipgloss.Color("#fffcc9"))
 	helpStyle = lipgloss.
 			NewStyle().Foreground(lipgloss.Color("241"))
 )
@@ -196,7 +196,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "n":
 			models[mainModel] = m
 			//save the state of current model
-			models[form]=NewForm(m.focused)
+			models[form] = NewForm(m.focused)
 			return models[form].Update(nil)
 		}
 	case Book:
