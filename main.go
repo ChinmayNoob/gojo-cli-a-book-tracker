@@ -43,6 +43,14 @@ type Book struct {
 
 //implement the book.item interface
 
+func (t *Book) Next() {
+	if t.status == completedReading {
+		t.status = yetToRead
+	} else {
+		t.status++
+	}
+}
+
 func (t Book) FilterValue() string {
 	return t.title
 }
@@ -66,6 +74,17 @@ type Model struct {
 
 func New() *Model {
 	return &Model{}
+}
+
+func (m *Model) MoveToNext() tea.Msg {
+	selectedItem := m.lists[m.focused].SelectedItem()
+	selectedBook := selectedItem.(Book)
+	m.lists[selectedBook.status].RemoveItem(m.lists[m.focused].Index())
+	selectedBook.Next()
+	m.lists[selectedBook.status].InsertItem(len(m.lists[selectedBook.status].Items())-1, list.Item(selectedBook))
+
+	return nil;
+
 }
 
 // go to next list
@@ -140,10 +159,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 
 		if !m.loaded {
-			columnStyle.Width(msg.Width/divisor)
-			focusedStyle.Width(msg.Width/divisor)
-			columnStyle.Height(msg.Height-divisor)
-			focusedStyle.Height(msg.Height-divisor)
+			columnStyle.Width(msg.Width / divisor)
+			focusedStyle.Width(msg.Width / divisor)
+			columnStyle.Height(msg.Height - divisor)
+			focusedStyle.Height(msg.Height - divisor)
 			m.initLists(msg.Width, msg.Height)
 			m.loaded = true
 		}
@@ -152,10 +171,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q":
 			m.quitting = true
 			return m, tea.Quit
-		case "left","h":
+		case "left", "h":
 			m.Prev()
-		case "right","l":
+		case "right", "l":
 			m.Next()
+		case "enter":
+			return m,m.MoveToNext
 		}
 	}
 
@@ -213,7 +234,6 @@ func (m Model) View() string {
 		)
 	}
 }
-
 
 func main() {
 	m := New()
