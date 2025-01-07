@@ -132,18 +132,18 @@ func (m *Model) initLists(width int, height int) {
 	m.lists[yetToRead].SetItems([]list.Item{
 		Book{
 			status:      yetToRead,
-			title:       "abc",
-			description: "xyz",
+			title:       "The art of doing Science and Engineering",
+			description: "Richard Hamming",
 		},
 		Book{
 			status:      yetToRead,
-			title:       "pqr",
-			description: "lmao",
+			title:       "Siddhartha",
+			description: "Herman Hesse",
 		},
 		Book{
 			status:      yetToRead,
-			title:       "skibidi",
-			description: "ohio",
+			title:       "The Republic",
+			description: "Plato",
 		},
 	})
 	//currently reading
@@ -151,8 +151,8 @@ func (m *Model) initLists(width int, height int) {
 	m.lists[currentlyReading].SetItems([]list.Item{
 		Book{
 			status:      currentlyReading,
-			title:       "abc",
-			description: "xyz",
+			title:       "Norwegian Woods",
+			description: "Haruki Murakami",
 		},
 	})
 	//completed Reading
@@ -160,8 +160,8 @@ func (m *Model) initLists(width int, height int) {
 	m.lists[completedReading].SetItems([]list.Item{
 		Book{
 			status:      completedReading,
-			title:       "abc",
-			description: "xyz",
+			title:       "White Nights",
+			description: "Fyodor Dostoevsky",
 		},
 	})
 }
