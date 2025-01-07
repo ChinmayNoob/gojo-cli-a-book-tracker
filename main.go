@@ -57,19 +57,37 @@ func (t Book) Description() string {
 
 /* MAIN MODEL*/
 type Model struct {
-	focused status
-	lists   []list.Model
-	err     error
-	loaded  bool
+	focused  status
+	lists    []list.Model
+	err      error
+	loaded   bool
+	quitting bool
 }
 
 func New() *Model {
 	return &Model{}
+}
 
+// go to next list
+func (m *Model) Next() {
+	if m.focused == completedReading {
+		m.focused = yetToRead
+	} else {
+		m.focused++
+	}
+}
+
+// go to prev list
+func (m *Model) Prev() {
+	if m.focused == yetToRead {
+		m.focused = completedReading
+	} else {
+		m.focused--
+	}
 }
 
 func (m *Model) initLists(width int, height int) {
-	defaultList := list.New([]list.Item{}, list.NewDefaultDelegate(), width/divisor, height)
+	defaultList := list.New([]list.Item{}, list.NewDefaultDelegate(), width/divisor, height/2)
 	defaultList.SetShowHelp(false)
 	m.lists = []list.Model{defaultList, defaultList, defaultList}
 	// init books accoring to their status
@@ -122,8 +140,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 
 		if !m.loaded {
+			columnStyle.Width(msg.Width/divisor)
+			focusedStyle.Width(msg.Width/divisor)
+			columnStyle.Height(msg.Height-divisor)
+			focusedStyle.Height(msg.Height-divisor)
 			m.initLists(msg.Width, msg.Height)
 			m.loaded = true
+		}
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+c", "q":
+			m.quitting = true
+			return m, tea.Quit
+		case "left","h":
+			m.Prev()
+		case "right","l":
+			m.Next()
 		}
 	}
 
@@ -133,25 +165,55 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	if m.loaded {
-		yetToReadView := m.lists[yetToRead].View()
-		currentlyReadingView := m.lists[currentlyReading].View()
-		completedReadingView := m.lists[completedReading].View()
+	// If quitting, return an empty string.
+	if m.quitting {
+		return ""
+	}
 
-		switch m.focused {
-		case yetToRead:
-			return lipgloss.JoinHorizontal(
-				lipgloss.Left,
-				focusedStyle.Render(yetToReadView),
-				columnStyle.Render(currentlyReadingView),
-				columnStyle.Render(completedReadingView),
-			)
-		}
-	} else {
+	// If not loaded yet, display a loading message.
+	if !m.loaded {
 		return "loading..."
 	}
 
+	// Extract the views for each column.
+	yetToReadView := m.lists[yetToRead].View()
+	currentlyReadingView := m.lists[currentlyReading].View()
+	completedReadingView := m.lists[completedReading].View()
+
+	// Switch based on the focused column to apply the `focusedStyle`.
+	switch m.focused {
+	case yetToRead:
+		return lipgloss.JoinHorizontal(
+			lipgloss.Left,
+			focusedStyle.Render(yetToReadView),
+			columnStyle.Render(currentlyReadingView),
+			columnStyle.Render(completedReadingView),
+		)
+	case currentlyReading:
+		return lipgloss.JoinHorizontal(
+			lipgloss.Left,
+			columnStyle.Render(yetToReadView),
+			focusedStyle.Render(currentlyReadingView),
+			columnStyle.Render(completedReadingView),
+		)
+	case completedReading:
+		return lipgloss.JoinHorizontal(
+			lipgloss.Left,
+			columnStyle.Render(yetToReadView),
+			columnStyle.Render(currentlyReadingView),
+			focusedStyle.Render(completedReadingView),
+		)
+	default:
+		// Fallback if `m.focused` is invalid.
+		return lipgloss.JoinHorizontal(
+			lipgloss.Left,
+			columnStyle.Render(yetToReadView),
+			columnStyle.Render(currentlyReadingView),
+			columnStyle.Render(completedReadingView),
+		)
+	}
 }
+
 
 func main() {
 	m := New()
