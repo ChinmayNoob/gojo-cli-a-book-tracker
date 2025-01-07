@@ -19,7 +19,19 @@ const (
 	completedReading
 )
 
-
+/*Styling*/
+var (
+	columnStyle = lipgloss.
+			NewStyle().Padding(1, 2).
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("#3c3c3c"))
+	focusedStyle = lipgloss.
+			NewStyle().Padding(1, 2).
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("62"))
+	helpStyle = lipgloss.
+			NewStyle().Foreground(lipgloss.Color("241"))
+)
 
 /* Custom Books*/
 
@@ -122,12 +134,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Model) View() string {
 	if m.loaded {
-		return lipgloss.JoinHorizontal(
-			lipgloss.Left,
-			m.lists[yetToRead].View(),
-			m.lists[currentlyReading].View(),
-			m.lists[completedReading].View(),
-		)
+		yetToReadView := m.lists[yetToRead].View()
+		currentlyReadingView := m.lists[currentlyReading].View()
+		completedReadingView := m.lists[completedReading].View()
+
+		switch m.focused {
+		case yetToRead:
+			return lipgloss.JoinHorizontal(
+				lipgloss.Left,
+				focusedStyle.Render(yetToReadView),
+				columnStyle.Render(currentlyReadingView),
+				columnStyle.Render(completedReadingView),
+			)
+		}
 	} else {
 		return "loading..."
 	}
