@@ -6,15 +6,20 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type status int
+
+const divisor = 4
 
 const (
 	yetToRead status = iota
 	currentlyReading
 	completedReading
 )
+
+
 
 /* Custom Books*/
 
@@ -40,33 +45,58 @@ func (t Book) Description() string {
 
 /* MAIN MODEL*/
 type Model struct {
-	list list.Model
-	err  error
+	focused status
+	lists   []list.Model
+	err     error
+	loaded  bool
 }
 
-func New() *Model{
+func New() *Model {
 	return &Model{}
 
 }
 
-func (m *Model) initList(width int, height int) {
-	m.list = list.New([]list.Item{}, list.NewDefaultDelegate(), width, height)
-	m.list.Title = "Book Tracker"
-	m.list.SetItems([]list.Item{
+func (m *Model) initLists(width int, height int) {
+	defaultList := list.New([]list.Item{}, list.NewDefaultDelegate(), width/divisor, height)
+	defaultList.SetShowHelp(false)
+	m.lists = []list.Model{defaultList, defaultList, defaultList}
+	// init books accoring to their status
+
+	//yet to read
+	m.lists[yetToRead].Title = "Yet To Read"
+	m.lists[yetToRead].SetItems([]list.Item{
+		Book{
+			status:      yetToRead,
+			title:       "abc",
+			description: "xyz",
+		},
+		Book{
+			status:      yetToRead,
+			title:       "pqr",
+			description: "lmao",
+		},
+		Book{
+			status:      yetToRead,
+			title:       "skibidi",
+			description: "ohio",
+		},
+	})
+	//currently reading
+	m.lists[currentlyReading].Title = "Currently Reading"
+	m.lists[currentlyReading].SetItems([]list.Item{
 		Book{
 			status:      currentlyReading,
 			title:       "abc",
 			description: "xyz",
 		},
+	})
+	//completed Reading
+	m.lists[completedReading].Title = "Done Reading"
+	m.lists[completedReading].SetItems([]list.Item{
 		Book{
-			status:      currentlyReading,
-			title:       "pqr",
-			description: "lmao",
-		},
-		Book{
-			status:      currentlyReading,
-			title:       "skibidi",
-			description: "ohio",
+			status:      completedReading,
+			title:       "abc",
+			description: "xyz",
 		},
 	})
 }
@@ -78,25 +108,38 @@ func (m Model) Init() tea.Cmd {
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.initList(msg.Width,msg.Height)
-	} 
 
+		if !m.loaded {
+			m.initLists(msg.Width, msg.Height)
+			m.loaded = true
+		}
+	}
 
-	var cmd tea.Cmd;
-	m.list, cmd = m.list.Update(msg)
+	var cmd tea.Cmd
+	m.lists[m.focused], cmd = m.lists[m.focused].Update(msg)
 	return m, cmd
 }
 
 func (m Model) View() string {
-	return m.list.View();
+	if m.loaded {
+		return lipgloss.JoinHorizontal(
+			lipgloss.Left,
+			m.lists[yetToRead].View(),
+			m.lists[currentlyReading].View(),
+			m.lists[completedReading].View(),
+		)
+	} else {
+		return "loading..."
+	}
+
 }
 
-func main (){
-	m:= New();
-	p:= tea.NewProgram(m)
+func main() {
+	m := New()
+	p := tea.NewProgram(m)
 	if _, err := p.Run(); err != nil {
-        fmt.Println(err)
-        os.Exit(1)
-    }
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
 }
